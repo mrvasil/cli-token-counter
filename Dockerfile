@@ -8,7 +8,6 @@ WORKDIR /app
 COPY package.json ./
 COPY server.js ./
 COPY public ./public
-COPY .env ./
 
 USER node
 
