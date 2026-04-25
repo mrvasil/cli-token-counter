@@ -1,0 +1,13 @@
+{
+  "name": "token-counter-web",
+  "version": "1.0.0",
+  "description": "Minimal live statistics page for CLIProxyAPI usage and Codex capacity.",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>tokens</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="ambient" aria-hidden="true"></div>
+    <canvas class="usage-bg" id="usage-bg" aria-hidden="true"></canvas>
+
+    <main class="stage">
+      <section class="card" role="status" aria-live="polite">
+        <header class="card__head">
+          <span class="dot" id="status-dot" data-state="idle"></span>
+          <span class="card__label">tokens</span>
+        </header>
+
+        <div class="pressure" id="pressure" data-state="idle" aria-label="system pressure">
+          <svg class="pressure__ring" viewBox="0 0 44 44" aria-hidden="true">
+            <circle class="pressure__track" cx="22" cy="22" r="18"></circle>
+            <circle class="pressure__fill" cx="22" cy="22" r="18"></circle>
+          </svg>
+          <span class="pressure__value" id="pressure-value">—</span>
+        </div>
+
+        <div class="counter" id="counter" aria-label="tokens counter"></div>
+
+        <div class="delta" id="delta" aria-hidden="true">&nbsp;</div>
+
+        <div class="metrics">
+          <div class="pill" data-metric="tpm">
+            <span class="pill__label">tpm</span>
+            <span class="pill__value" id="m-tpm"></span>
+            <span class="pill__trend" id="m-tpm-trend"></span>
+          </div>
+          <div class="pill" data-metric="rpm">
+            <span class="pill__label">rpm</span>
+            <span class="pill__value" id="m-rpm"></span>
+            <span class="pill__trend" id="m-rpm-trend"></span>
+          </div>
+          <div class="pill" data-metric="requests">
+            <span class="pill__label">requests</span>
+            <span class="pill__value" id="m-req"></span>
+          </div>
+          <div class="pill" data-metric="cost">
+            <span class="pill__label">cost</span>
+            <span class="pill__value" id="m-cost"></span>
+          </div>
+          <div class="pill pill--warn" data-metric="failed">
+            <span class="pill__label">failed</span>
+            <span class="pill__value" id="m-failed"></span>
+          </div>
+        </div>
+      </section>
+
+      <section class="api-usage" id="api-usage" aria-label="api key usage"></section>
+    </main>
+
+    <footer class="foot" aria-label="codex capacity">
+      <div class="capacity">
+        <div class="capacity__row">
+          <span class="capacity__label">codex capacity</span>
+          <span class="capacity__sep" aria-hidden="true">·</span>
+          <span class="capacity__pct" id="cap-pct">—</span>
+          <span class="capacity__sep" aria-hidden="true">·</span>
+          <span class="capacity__count" id="cap-count">— / —</span>
+          <span class="capacity__sep" aria-hidden="true">·</span>
+          <span class="capacity__reset" id="cap-reset">resets in —</span>
+          <span class="capacity__sep" aria-hidden="true">·</span>
+          <span class="capacity__forecast" id="cap-forecast">forecast —</span>
+        </div>
+        <div class="capacity__timeline" id="cap-timeline" aria-label="upcoming codex resets"></div>
+        <div class="capacity__bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="cap-bar-host">
+          <div class="capacity__fill" id="cap-fill"></div>
+          <div class="capacity__shimmer" aria-hidden="true"></div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

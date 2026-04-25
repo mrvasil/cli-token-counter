@@ -1,0 +1,10 @@
+.env
+.git
+.DS_Store
+node_modules
+npm-debug.log*
+output
+screenshot-*.png
+screenshot-*.jpg
+screenshot-*.jpeg
+screenshot-*.webp

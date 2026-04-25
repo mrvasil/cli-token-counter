@@ -1,0 +1,11 @@
+services:
+  token-counter-web:
+    build: .
+    container_name: token-counter-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-4173}:${PORT:-4173}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
