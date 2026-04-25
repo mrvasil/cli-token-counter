@@ -3,17 +3,6 @@ services:
     build: .
     container_name: token-counter-web
     restart: unless-stopped
-    environment:
-      MANAGEMENT_URL: "http://host.docker.internal:8317/v0/management"
-      MANAGEMENT_KEY: "change-me"
-      PORT: "4173"
-      POLL_INTERVAL_MS: "5000"
-      AUTH_POLL_INTERVAL_MS: "10000"
-      RATE_WINDOW_SEC: "300"
-      CHART_WINDOW_SEC: "14400"
-      CHART_BUCKETS: "48"
-      CODEX_RATE_HISTORY_MS: "900000"
-      CODEX_QUOTA_CONCURRENCY: "6"
     ports:
       - "4173:4173"
     extra_hosts:
