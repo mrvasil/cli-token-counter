@@ -6,6 +6,6 @@ services:
     env_file:
       - .env
     ports:
-      - "${PORT:-4173}:${PORT:-4173}"
+      - "4173:4173"
     extra_hosts:
       - "host.docker.internal:host-gateway"
