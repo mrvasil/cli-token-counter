@@ -3,6 +3,8 @@ services:
     build: .
     container_name: token-counter-web
     restart: unless-stopped
+    env_file:
+      - .env
     ports:
       - "4173:4173"
     extra_hosts:

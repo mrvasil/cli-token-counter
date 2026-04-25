@@ -80,14 +80,6 @@ Build and run with Compose:
 docker compose up -d --build
 ```
 
-`docker-compose.yml` does not require an external `.env` file, so it can be pasted directly into Portainer/Stacks. Before deploying, replace:
-
-```yaml
-MANAGEMENT_KEY: "change-me"
-```
-
-with your CLIProxyAPI management key. If your CLIProxyAPI management API is not reachable at `http://host.docker.internal:8317/v0/management`, also edit `MANAGEMENT_URL`.
-
 Then open:
 
 ```txt
