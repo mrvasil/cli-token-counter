@@ -53,6 +53,7 @@ Main environment variables:
 | `CHART_BUCKETS` | `48` | Number of graph buckets. |
 | `CODEX_RATE_HISTORY_MS` | `900000` | Codex burn-rate history window. |
 | `CODEX_QUOTA_CONCURRENCY` | `6` | Number of Codex quota checks to run in parallel. |
+| `API_USERS_LIMIT` | `4` | Number of API user cards shown: active users first, then top users by total tokens. |
 | `CODEX_USAGE_URL` | ChatGPT WHAM usage endpoint | Codex quota URL called through CLIProxyAPI `/api-call`. |
 | `MODEL_PRICES_JSON` | built-in defaults | Optional USD-per-1M-token price overrides. |
 

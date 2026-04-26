@@ -115,7 +115,6 @@ body {
   backdrop-filter: blur(16px) saturate(138%);
   -webkit-backdrop-filter: blur(16px) saturate(138%);
   isolation: isolate;
-  cursor: zoom-in;
   animation: card-in 760ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -835,10 +834,6 @@ body {
 .capacity[data-forecast="depleted"] .capacity__forecast {
   color: rgba(255, 137, 153, 0.82);
   text-shadow: 0 0 16px rgba(255, 118, 138, 0.18);
-}
-
-body.focus-mode .card {
-  cursor: zoom-out;
 }
 
 body.focus-mode .stage {

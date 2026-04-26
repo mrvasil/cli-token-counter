@@ -71,6 +71,7 @@ const CHART_WINDOW_SEC = envNumber('CHART_WINDOW_SEC', 4 * 3600, { min: 1800, in
 const CHART_BUCKETS = envNumber('CHART_BUCKETS', 48, { min: 12, max: 96, integer: true });
 const CODEX_RATE_HISTORY_MS = envNumber('CODEX_RATE_HISTORY_MS', 15 * 60_000, { min: 60_000, integer: true });
 const CODEX_QUOTA_CONCURRENCY = envNumber('CODEX_QUOTA_CONCURRENCY', 6, { min: 1, max: 20, integer: true });
+const API_USERS_LIMIT = envNumber('API_USERS_LIMIT', 4, { min: 1, max: 24, integer: true });
 const CODEX_FIVE_HOUR_SEC = 5 * 60 * 60;
 const DEFAULT_MODEL_PRICES = {
   'gpt-5.5': {
@@ -272,8 +273,42 @@ function buildApiUserStats(usageJson, windowSec = CHART_WINDOW_SEC, bucketCount 
     });
   }
 
-  users.sort((a, b) => b.totalTokens - a.totalTokens);
-  return users;
+  return selectApiUsers(users, API_USERS_LIMIT);
+}
+
+function selectApiUsers(users, limit) {
+  const selected = [];
+  const seen = new Set();
+  const add = (user) => {
+    if (selected.length >= limit) return;
+    const id = user.apiKey || user.name;
+    if (seen.has(id)) return;
+    seen.add(id);
+    selected.push(user);
+  };
+
+  const byCurrentUsage = (a, b) => (
+    (b.recentTokens - a.recentTokens)
+    || (b.recentRequests - a.recentRequests)
+    || (b.totalTokens - a.totalTokens)
+  );
+  const byTotalTokens = (a, b) => (
+    (b.totalTokens - a.totalTokens)
+    || (b.recentTokens - a.recentTokens)
+    || (b.recentRequests - a.recentRequests)
+  );
+
+  users
+    .filter((user) => user.recentTokens > 0 || user.recentRequests > 0)
+    .sort(byCurrentUsage)
+    .forEach(add);
+
+  users
+    .slice()
+    .sort(byTotalTokens)
+    .forEach(add);
+
+  return selected.sort(byTotalTokens);
 }
 
 function priceForModel(modelName) {
@@ -397,6 +432,12 @@ function normalizeNumber(value) {
   return Number.isFinite(n) ? n : null;
 }
 
+function clampPercent(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(100, n));
+}
+
 function pickFiveHourWindow(rateLimit) {
   const primary = rateLimit?.primary_window || rateLimit?.primaryWindow || null;
   const secondary = rateLimit?.secondary_window || rateLimit?.secondaryWindow || null;
@@ -409,8 +450,8 @@ function pickFiveHourWindow(rateLimit) {
 
 function quotaRemainingValue(quota) {
   const exact = Number(quota?.remainingPctExact);
-  if (Number.isFinite(exact)) return exact;
-  return Number(quota?.remainingPct) || 0;
+  if (Number.isFinite(exact)) return clampPercent(exact);
+  return clampPercent(quota?.remainingPct);
 }
 
 function recordCodexQuotaSample(quotaState, at = Date.now()) {
@@ -541,9 +582,9 @@ function buildCodexForecast(quotaState, now = Date.now()) {
 }
 
 async function fetchCodexQuota(file, index) {
-  const authIndex = file.auth_index || file.authIndex;
+  const authIndex = file.auth_index ?? file.authIndex;
   const accountId = resolveCodexAccountId(file);
-  if (!authIndex || !accountId) {
+  if (authIndex === undefined || authIndex === null || authIndex === '' || !accountId) {
     throw new Error(`codex account ${index}: missing auth_index or chatgpt account id`);
   }
 
@@ -611,7 +652,15 @@ async function summarizeCodexQuotas(authFilesJson) {
   const codex = files.filter(
     (f) => f && f.provider === 'codex' && f.disabled !== true,
   );
-  const quotas = await mapLimited(codex, CODEX_QUOTA_CONCURRENCY, fetchCodexQuota);
+  const quotas = await mapLimited(codex, CODEX_QUOTA_CONCURRENCY, async (file, index) => {
+    try {
+      return await fetchCodexQuota(file, index);
+    } catch (err) {
+      const message = err?.message || String(err);
+      console.warn(`[poll/auth] codex account ${index} quota failed, counting as 0%: ${message}`);
+      return failedCodexQuota(file, index, message);
+    }
+  });
 
   const total = codex.length;
   let limited = 0;
@@ -621,13 +670,14 @@ async function summarizeCodexQuotas(authFilesJson) {
   const accounts = [];
 
   for (const quota of quotas) {
-    sumRemaining += quota.remainingPct;
+    const remaining = quotaRemainingValue(quota);
+    sumRemaining += remaining;
 
     if (quota.limited) {
       limited++;
     }
 
-    if (quota.remainingPct < 100 && quota.resetsAt !== null) {
+    if (remaining < 100 && quota.resetsAt !== null) {
       if (nextResetAt === null || quota.resetsAt < nextResetAt) nextResetAt = quota.resetsAt;
       if (latestResetAt === null || quota.resetsAt > latestResetAt) latestResetAt = quota.resetsAt;
     }
@@ -637,8 +687,9 @@ async function summarizeCodexQuotas(authFilesJson) {
 
   const totalPool = total * 100;
   const poolRemainingPercent = totalPool > 0
-    ? Math.round((sumRemaining / totalPool) * 100)
+    ? (sumRemaining / totalPool) * 100
     : 0;
+  const poolRemainingRatio = totalPool > 0 ? sumRemaining / totalPool : 0;
   const available = total - limited;
   return {
     total,
@@ -647,10 +698,27 @@ async function summarizeCodexQuotas(authFilesJson) {
     sumRemaining,
     totalPool,
     poolRemainingPercent,
-    poolRemainingRatio: poolRemainingPercent / 100,
+    poolRemainingRatio,
     nextResetAt,
     latestResetAt,
     accounts,
+  };
+}
+
+function failedCodexQuota(file, index, message) {
+  const authIndex = file?.auth_index ?? file?.authIndex ?? index;
+  return {
+    id: String(authIndex),
+    email: file?.email || file?.account || file?.label || null,
+    planType: null,
+    limited: true,
+    error: message,
+    resetsAt: null,
+    resetAfterSec: null,
+    usedPercent: 100,
+    usedPercentExact: 100,
+    remainingPct: 0,
+    remainingPctExact: 0,
   };
 }
 

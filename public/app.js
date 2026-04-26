@@ -474,10 +474,12 @@ function renderApiUsage(users) {
   for (const user of users) {
     const row = document.createElement('article');
     row.className = 'api-user';
-    const heat = clamp01((Number(user.recentTokens) || 0) / maxRecentTokens);
+    const recentTokens = Number(user.recentTokens) || 0;
+    const recentRequests = Number(user.recentRequests) || 0;
+    const heat = clamp01(recentTokens / maxRecentTokens);
     row.style.setProperty('--heat', heat.toFixed(3));
-    row.dataset.active = heat > 0.04 ? 'true' : 'false';
-    row.title = `${formatNum(user.recentTokens || 0)} tokens · ${formatNum(user.recentRequests || 0)} requests in last 5m`;
+    row.dataset.active = recentTokens > 0 || recentRequests > 0 ? 'true' : 'false';
+    row.title = `${formatNum(recentTokens)} tokens · ${formatNum(recentRequests)} requests in last 5m`;
 
     const name = document.createElement('span');
     name.className = 'api-user__name';
